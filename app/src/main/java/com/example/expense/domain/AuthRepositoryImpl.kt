@@ -14,6 +14,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun userRegistration(
         registrationRequestBody: RegistrationRequestBody
     ): NetworkState<RegistrationResponse> {
+
         return try {
             val response = authenticationAPIService.userRegistration(registrationRequestBody)
             if (response.isSuccessful && response.body() != null) {

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,7 +28,6 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +41,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.expense.model.authenticationApiService.dataModel.request.LoginRequestBody
 import com.example.expense.model.authenticationApiService.dataModel.request.RegistrationRequestBody
 import com.example.expense.network.NetworkState
 import com.example.expense.ui.theme.AuthViewModel
@@ -49,7 +50,6 @@ import com.example.expense.utils.CommonComposable.ApiProgressBar
 import com.example.expense.utils.CommonComposable.EditTextField
 import com.example.expense.utils.CommonComposable.SubmitButton
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -63,25 +63,55 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
     @Composable
-    private fun CollectUiStates() {
-        val registrationState by authViewModel.registrationState.collectAsStateWithLifecycle()
-        when(val state = registrationState){
-            is NetworkState.Error -> {
-                Toast.makeText(this,state.errorCode.toString(),Toast.LENGTH_SHORT).show()
+    private fun CollectLoginUiStates() {
+        val userLoginState by authViewModel.userLoginState.collectAsStateWithLifecycle()
+        val registrationLoadingState by authViewModel.loadingState.collectAsStateWithLifecycle()
+        if (registrationLoadingState) {
+            ApiProgressBar(isLoading = true)
+        } else {
+            ApiProgressBar(isLoading = false)
+            when (val state = userLoginState) {
+                is NetworkState.Error -> {
+                    Toast.makeText(this, state.errorCode.toString(), Toast.LENGTH_SHORT).show()
+                }
+
+                is NetworkState.Success -> {
+                    Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show()
+                }
+
+                else -> {}
             }
-            NetworkState.Loading -> {
-                ApiProgressBar()
-            }
-            is NetworkState.Success -> {
-                Toast.makeText(this,"Success",Toast.LENGTH_SHORT).show()
-            }
-            else -> {}
         }
+
+    }
+    @Composable
+    private fun CollectRegistrationUiStates() {
+        val userRegistrationState by authViewModel.registrationState.collectAsStateWithLifecycle()
+        val registrationLoadingState by authViewModel.loadingState.collectAsStateWithLifecycle()
+        if (registrationLoadingState) {
+            ApiProgressBar(isLoading = true)
+        } else {
+            ApiProgressBar(isLoading = false)
+            when (val state = userRegistrationState) {
+                is NetworkState.Error -> {
+                    Toast.makeText(this, state.errorCode.toString(), Toast.LENGTH_SHORT).show()
+                }
+
+                is NetworkState.Success -> {
+                    Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show()
+                }
+
+                else -> {}
+            }
+        }
+
     }
 
     @Composable
     fun UserRegistrationScreen(modifier: Modifier = Modifier) {
+        CollectRegistrationUiStates()
         Box(modifier = modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.authentication_background),
@@ -89,14 +119,25 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop // Adjust the scaling to fit the screen
             )
-            RegistrationForm()
-            CollectUiStates()
+            Column(
+                modifier = modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = "Registration",
+                    modifier = Modifier.padding(top = 46.dp, start = 38.dp),
+                    color = Color.White,
+                    fontSize = 20.sp
+                )
+                RegistrationForm()
+            }
         }
 
     }
 
     @Composable
-    fun UserLoginScreen(modifier: Modifier = Modifier){
+    private fun UserLoginScreen(modifier: Modifier = Modifier) {
         Box(modifier = modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.authentication_background),
@@ -104,7 +145,60 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop // Adjust the scaling to fit the screen
             )
-            RegistrationForm()
+            Column(
+                modifier = modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = "Login",
+                    modifier = Modifier.padding(top = 46.dp, start = 38.dp),
+                    color = Color.White,
+                    fontSize = 20.sp
+                )
+                LoginForm()
+                CollectLoginUiStates()
+            }
+        }
+    }
+
+    @Composable
+    fun LoginForm(modifier: Modifier = Modifier) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .wrapContentSize(Alignment.BottomCenter)
+                .background(
+                    color = Color.White, shape = RoundedCornerShape(
+                        topStart = 38.dp, topEnd = 38.dp, // No rounding at the top
+                        bottomStart = 0.dp, bottomEnd = 0.dp
+                    )
+                )
+                .padding(horizontal = 38.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Spacer(modifier = Modifier.height(40.dp))
+            Image(
+                painter = painterResource(id = R.drawable.login_icon),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = modifier
+                    .size(180.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(40.dp))
+            LoginFormColumn(
+                modifier = Modifier.padding(10.dp),
+                onSignIn = { email, password ->
+                    authViewModel.userLogin(
+                        LoginRequestBody(
+                            userEmail = email,
+                            password = password
+                        )
+                    )
+                }
+            )
         }
     }
 
@@ -134,14 +228,14 @@ class MainActivity : ComponentActivity() {
                     .align(Alignment.CenterHorizontally)
             )
             Spacer(modifier = Modifier.height(40.dp))
-            FormColumn(
+            RegistrationFormColumn(
                 modifier = Modifier.padding(10.dp),
-                onRegister = { name, email, password ->
+                onRegistration = { email, password, firstName ->
                     authViewModel.userRegistration(
                         RegistrationRequestBody(
-                            firstName = name,
                             userEmail = email,
-                            password = password
+                            password = password,
+                            firstName = firstName
                         )
                     )
                 }
@@ -150,8 +244,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun FormColumn(modifier: Modifier = Modifier, onRegister: (String, String, String) -> Unit) {
-        var name by remember { mutableStateOf("") }
+    fun LoginFormColumn(modifier: Modifier = Modifier, onSignIn: (String, String) -> Unit) {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
 
@@ -160,10 +253,43 @@ class MainActivity : ComponentActivity() {
                 .wrapContentSize(Alignment.Center),
             verticalArrangement = Arrangement.Center
         ) {
-            EditTextField(label = "Name", text = name, onTextChange = { name = it })
             EditTextField(label = "Email", text = email, onTextChange = { email = it })
             EditTextField(label = "Password", text = password, onTextChange = { password = it })
-            SubmitButton(label = "Sign up", onClick = { onRegister(name, email, password) })
+            SubmitButton(label = "Sign in", onClick = {
+                onSignIn(
+                    email,
+                    password
+                )
+            })
+            GoogleButton(onClick = { })
+            GetLoginText()
+        }
+    }
+
+    @Composable
+    fun RegistrationFormColumn(
+        modifier: Modifier = Modifier,
+        onRegistration: (String, String, String) -> Unit
+    ) {
+        var email by remember { mutableStateOf("") }
+        var password by remember { mutableStateOf("") }
+        var firstName by remember { mutableStateOf("") }
+
+        Column(
+            modifier = modifier
+                .wrapContentSize(Alignment.Center),
+            verticalArrangement = Arrangement.Center
+        ) {
+            EditTextField(label = "Email", text = email, onTextChange = { email = it })
+            EditTextField(label = "Password", text = password, onTextChange = { password = it })
+            EditTextField(label = "First Name", text = firstName, onTextChange = { firstName = it })
+            SubmitButton(label = "Sign Up", onClick = {
+                onRegistration(
+                    email,
+                    password,
+                    firstName
+                )
+            })
             GoogleButton(onClick = { })
             GetLoginText()
         }
@@ -205,7 +331,7 @@ class MainActivity : ComponentActivity() {
                 Spacer(modifier = Modifier.width(8.dp)) // Space between the image and the text
 
                 Text(
-                    text = "Sign up with Google",
+                    text = "Sign in with Google",
                     color = colorResource(id = R.color.grey_969696),
                     fontSize = 15.sp,
                 )
@@ -219,7 +345,7 @@ class MainActivity : ComponentActivity() {
             modifier = modifier
                 .padding(top = 15.dp, bottom = 60.dp)
                 .padding(horizontal = 10.dp),
-            text = "Alsjl ahdlsa dlsajl kdjslkdj salj dlksaj dlksaj lkdjl sjdlsa dl jdlkj sldjs la jdl sajdls jald jslkad jlksaj dlksaj  d lasjd lksaj dlaj l",
+            text = "Get your self register to experience seamless expense and payment management!",
             fontSize = 14.sp,
             color = colorResource(id = R.color.grey_737373),
         )

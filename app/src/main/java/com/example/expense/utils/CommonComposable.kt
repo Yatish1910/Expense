@@ -1,7 +1,10 @@
 package com.example.expense.utils
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -51,6 +54,7 @@ object CommonComposable {
                 unfocusedContainerColor = colorResource(id = R.color.white_F4F4F4),
                 focusedIndicatorColor = Color.Transparent, // No underline when focused
                 unfocusedIndicatorColor = Color.Transparent,
+                focusedTextColor = Color.Black
             )
         )
     }
@@ -75,13 +79,17 @@ object CommonComposable {
     }
 
     @Composable
-    fun ApiProgressBar(modifier: Modifier = Modifier){
-        CircularProgressIndicator(
-            modifier = modifier.width(32.dp),
-            color = MaterialTheme.colorScheme.secondary,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-        )
+    fun ApiProgressBar(modifier: Modifier = Modifier, isLoading: Boolean) {
+        if(isLoading){
+            CircularProgressIndicator(
+                modifier = modifier.size(48.dp), // Increased size for visibility
+                color = MaterialTheme.colorScheme.primary, // Adjust the color if necessary
+                strokeWidth = 4.dp // Thicker stroke for better visibility
+            )
+        }
     }
+
+
     @Composable
     fun BackButtonAndText(modifier: Modifier = Modifier) {
         Row(

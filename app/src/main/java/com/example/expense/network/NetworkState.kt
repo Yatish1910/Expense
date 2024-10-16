@@ -6,5 +6,4 @@ sealed class NetworkState<out T> {
         val errorMessage: String,
         val errorCode: Int? = null
     ) :NetworkState<T>()
-    data object Loading: NetworkState<Nothing>()
 }
